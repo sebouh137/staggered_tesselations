@@ -1,6 +1,3 @@
-include <segments.scad>
-wall_thickness=0.8;
-frame_height=3;
 module connect(start, end){
     dx=start-end;
     length=norm(dx);
