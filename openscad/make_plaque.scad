@@ -1,10 +1,10 @@
 module plaque(lines){
     rotate(180) {
-        linear_extrude(2)
+        color("Orange") linear_extrude(2)
             for (i=[0 : len(lines)])
-            translate([10, -(i-len(lines)/2+1)*12])
-                text(lines[i],size=10);
-        linear_extrude(1)
+            translate([12, -(i-len(lines)/2+1)*15])
+                text(lines[i],size=10, $fn=12);
+        color("Blue") linear_extrude(1)
             translate([100,0]) square([200,100],center=true);
     }
     
