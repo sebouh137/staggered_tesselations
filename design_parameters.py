@@ -18,23 +18,44 @@ det_gap=1.2
 
 #first layer of the first absorber
 hcal_start_z=359.6
+
+
+coord_thickness=2.11 #was 2.34
+
+class Component():
+    def __init__(self,z_offset, thickness, name):
+        self.z_offset=z_offset
+        self.thickness=thickness
+        self.name=name
+z=0
+components={}
+#insulator may be slightly thinner in reality (76 microns rather than 100 for one possible product); in which case the air gaps
+#would be slightly larger
+for name, thickness in [("absorber", 1.61), ("airgap1", 0.021),("cover", 0.04),                     
+                        ("foil1", 0.015),("scint", 0.3), ("foil2", 0.015), ("pcb", 0.08),
+                        ("insulator", 0.008),
+                        ("airgap2", 0.021)]:
+    components[name]=Component(z, thickness, name)
+    z+=thickness
+del z
+
 class BeamPipe():
     def holeX(self, layer):
-        z=hcal_start_z+layer*2.34
+        z=hcal_start_z+layer*coord_thickness
         return -1.329+(z-122.864)*(-11.252+1.329)/(522.664-122.864)
     def holeR(self, layer):
-        z=hcal_start_z+layer*2.34
+        z=hcal_start_z+layer*coord_thickness
         clearance=3.85
         beampipe_thickness=0.2
         return clearance + beampipe_thickness + 4.403+(z-122.864)*(14.592-4.403)/(522.664-122.864)
     def beampipeX(self, layer):
-        z=hcal_start_z+layer*2.34
+        z=hcal_start_z+layer*coord_thickness
         return -1.320+(z-122.864)*(-11.252+1.329)/(522.664-122.864)
     def beampipeR(self, layer):
-        z=hcal_start_z+layer*2.34
+        z=hcal_start_z+layer*coord_thickness
         return 4.403+(z-122.864)*(14.592-4.403)/(522.664-122.864)
     def getZ(self, layer):
-        return hcal_start_z+layer*2.34
+        return hcal_start_z+layer*coord_thickness
 beampipe0=BeamPipe()
 
     
