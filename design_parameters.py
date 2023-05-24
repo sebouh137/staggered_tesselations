@@ -62,7 +62,7 @@ beampipe0=BeamPipe()
 #determine the layer boundaries as a polygon
 def layer_boundaries(layer=0, side="L", beampipe=beampipe0, height=det_height, width=det_width,gap_between_sides=0.4,
                     gap_for_backplanes=0.4, backplanes_in_holes=False):
-    gap=gap_between_sides+gap_for_backplanes
+    gap=gap_between_sides+2*gap_for_backplanes
     offsetX=-10
     holeX=beampipe.holeX(layer)
     holeR=beampipe.holeR(layer)
