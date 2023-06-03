@@ -2,8 +2,12 @@
 import numpy as np
 from shapely import *
 
+#not including the last absorber
+n_layers=64
 
-sidelengths=[1.889]*9+[3.589]*9+[4.486]*36
+
+nsmall=7;nmed=9;nlarge=n_layers-nsmall-nmed
+sidelengths=[1.889]*nsmall+[3.589]*nmed+[4.486]*nlarge
 
 #= 19 small cells tall + thickness of a cell wall
 # or 10 medium cells tall + thickness of a cell wall
@@ -20,7 +24,6 @@ det_gap=1.2
 hcal_start_z=359.6
 
 
-coord_thickness=2.11 #was 2.34
 
 class Component():
     def __init__(self,z_offset, thickness, name):
@@ -29,15 +32,17 @@ class Component():
         self.name=name
 z=0
 components={}
-#insulator may be slightly thinner in reality (76 microns rather than 100 for one possible product); in which case the air gaps
+#insulator may be slightly thinner in reality (66 microns rather than 100 for one possible product); in which case the air gaps
 #would be slightly larger
-for name, thickness in [("absorber", 1.61), ("airgap1", 0.021),("cover", 0.04),                     
+for name, thickness in [("absorber", 1.52), ("airgap1", 0.0365),("cover", 0.04),                     
                         ("foil1", 0.015),("scint", 0.3), ("foil2", 0.015), ("pcb", 0.08),
-                        ("insulator", 0.008),
-                        ("airgap2", 0.021)]:
+                        ("insulator", 0.007),
+                        ("airgap2", 0.0365)]:
     components[name]=Component(z, thickness, name)
     z+=thickness
-del z
+
+coord_thickness=z# reduced to 2.11 due to thinner PCB and cover # NIM paper had 2.34
+#del z
 
 class BeamPipe():
     def holeX(self, layer):
@@ -96,3 +101,6 @@ def layer_boundaries(layer=0, side="L", beampipe=beampipe0, height=det_height, w
 wall_thickness = 0.08
 #gap between the cell cell of the 3d printed frame and the scintillator tile.  
 wall_scint_gap=0.01
+
+nW=34
+absorber_material=['W']*nW+['Fe']*(n_layers-nW+1)
