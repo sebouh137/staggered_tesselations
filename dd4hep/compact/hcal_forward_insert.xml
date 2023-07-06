@@ -117,10 +117,13 @@
         <segmentation
 	type="HexGrid"
 	side_length="3.*cm"
+	offset_x="1.*cm"
 	/>
 	<!--<segmentation
 	type="HexGrid"
 	side_length="3.*cm"
+	key_min="8"
+	key_max="63"
 	/>
       </segmentation>-->
       <id>system:8,barrel:3,module:4,layer:8,slice:5,x:32:-16,y:-16</id>  

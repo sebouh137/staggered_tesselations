@@ -26,6 +26,18 @@ namespace dd4hep {
 
     /// Default constructor used by derived classes passing an existing decoder
     HexGrid::HexGrid(const BitFieldCoder* decode) : Segmentation(decode) {
+      // define type and description
+	_type = "CartesianGridXY";
+	_description = "Cartesian segmentation in the local XY-plane";
+
+	// register all necessary parameters
+
+	registerParameter("side_length", "Cell size", _sideLength, 1., SegmentationParameter::LengthUnit);
+	registerParameter("offset_x", "Cell offset in X", _offsetX, 0., SegmentationParameter::LengthUnit, true);
+	registerParameter("offset_y", "Cell offset in Y", _offsetY, 0., SegmentationParameter::LengthUnit, true);
+	registerIdentifier("identifier_x", "Cell ID identifier for X", _xId, "x");
+	registerIdentifier("identifier_y", "Cell ID identifier for Y", _yId, "y");
+    
     }
 
     /// Destructor
