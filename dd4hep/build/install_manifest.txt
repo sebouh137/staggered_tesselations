@@ -1,0 +1,9 @@
+/home/sebouh/local/lib/libhg-cali-hex.components
+/home/sebouh/local/lib/libhg-cali-hex.so
+/home/sebouh/local/share/Project/hg-cali-hex/configuration_nohole.xml
+/home/sebouh/local/share/Project/hg-cali-hex/configuration_default.xml
+/home/sebouh/local/share/Project/hg-cali-hex/definitions.xml
+/home/sebouh/local/share/Project/hg-cali-hex/materials.xml
+/home/sebouh/local/share/Project/hg-cali-hex/elements.xml
+/home/sebouh/local/share/Project/hg-cali-hex/colors.xml
+/home/sebouh/local/share/Project/hg-cali-hex/hcal_forward_insert.xml
