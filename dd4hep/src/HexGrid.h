@@ -39,7 +39,12 @@ namespace dd4hep {
       virtual Vector3D position(const CellID& cellID) const;
       /// determine the cell ID based on the position
       virtual CellID cellID(const Vector3D& localPosition, const Vector3D& globalPosition, const VolumeID& volumeID) const;
-      /// access the grid size in X
+      // access the stagger mode: 0=no stagger; 1=stagger cycling through 3 offsets
+      int stagger() const {
+	return _stagger;
+      }
+      
+      /// access the grid size 
       double sideLength() const {
         return _sideLength;
       }
@@ -58,6 +63,11 @@ namespace dd4hep {
       /// access the field name used for Y
       const std::string& fieldNameY() const {
         return _yId;
+      }
+      
+      /// set the stagger mode: 0=no stagger; 1=stagger cycling through 3 offsets
+      void setStagger(int stagger) {
+	_stagger= stagger;
       }
       /// set the grid size in X
       void setSideLength(double cellSize) {
@@ -91,6 +101,8 @@ namespace dd4hep {
       virtual std::vector<double> cellDimensions(const CellID& cellID) const;
 
     protected:
+      /// the stagger mode:  0=off ; 1=cycle through 3 differnt offsets
+      int _stagger=1;
       /// the length of one side of a hexagon
       double _sideLength;
       /// the coordinate offset in X

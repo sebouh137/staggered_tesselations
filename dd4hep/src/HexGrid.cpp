@@ -17,6 +17,7 @@ namespace dd4hep {
 	_description = "Cartesian segmentation in the local XY-plane";
 
 	// register all necessary parameters
+	registerParameter("stagger", "stagger mode", _stagger, 1);
 	registerParameter("side_length", "Cell size", _sideLength, 1., SegmentationParameter::LengthUnit);
 	registerParameter("offset_x", "Cell offset in X", _offsetX, 0., SegmentationParameter::LengthUnit, true);
 	registerParameter("offset_y", "Cell offset in Y", _offsetY, 0., SegmentationParameter::LengthUnit, true);
@@ -30,8 +31,8 @@ namespace dd4hep {
 	_type = "CartesianGridXY";
 	_description = "Cartesian segmentation in the local XY-plane";
 
-	// register all necessary parameters
-
+	// register all necessary parameters                                                                        
+        registerParameter("stagger", "stagger mode", _stagger, 1);
 	registerParameter("side_length", "Cell size", _sideLength, 1., SegmentationParameter::LengthUnit);
 	registerParameter("offset_x", "Cell offset in X", _offsetX, 0., SegmentationParameter::LengthUnit, true);
 	registerParameter("offset_y", "Cell offset in Y", _offsetY, 0., SegmentationParameter::LengthUnit, true);
@@ -46,28 +47,39 @@ namespace dd4hep {
 
     /// determine the position based on the cell ID
     Vector3D HexGrid::position(const CellID& cID) const {
+        int layer= _decoder->get(cID,"layer");
 	Vector3D cellPosition;
-	cellPosition.X = binToPosition( _decoder->get(cID,_xId ), 1.5*_sideLength, _offsetX);
-	cellPosition.Y = binToPosition( _decoder->get(cID,_yId ), std::sqrt(3)/2*_sideLength, _offsetY);
+	cellPosition.X = _decoder->get(cID,_xId )*1.5*_sideLength+_offsetX+_sideLength/2;
+	cellPosition.Y = _decoder->get(cID,_yId )*std::sqrt(3)/2*_sideLength+ _offsetY+_sideLength*std::sqrt(3)/2;
+	if (_stagger==1)
+	  cellPosition.X+=(layer%3)*_sideLength;
 	return cellPosition;
     }
 
-    inline int positive_modulo(int i, int n) {
-      return (i % n + n) % n;
+    inline double positive_modulo(double i, double n) {
+      return std::fmod(std::fmod(i,n) + n,n);
     }
+
+    //inline double positive_floor(
     
     /// determine the cell ID based on the position
     CellID HexGrid::cellID(const Vector3D& localPosition, const Vector3D& /* globalPosition */, const VolumeID& vID) const {
         CellID cID = vID ;
+	int layer= _decoder->get(cID,"layer");
 	double _gridSizeY=std::sqrt(3)*_sideLength/2.;
 	double _gridSizeX=3*_sideLength/2;
 
+	double x=localPosition.X-_offsetX;
+
+	if (_stagger==1)
+          x-=(layer%3)*_sideLength;
+	
 	double a=positive_modulo((localPosition.Y-_offsetY)/(std::sqrt(3)*_sideLength),1);
-	double b=positive_modulo((localPosition.X-_offsetX)/(3*_sideLength),1);
-	int ix = std::floor((localPosition.X-_offsetX)/(3*_sideLength/2))+		
-	  (b<1/2)*(-abs(a-.5)<(b-.5)*3)+(b>1/2)*(abs(a-.5)-.5<(b-1)*3);
-	int iy=std::floor((localPosition.Y-_offsetY)/(std::sqrt(3)*_sideLength/2));
-	iy-=(ix+iy)%2;
+	double b=positive_modulo((x)/(3*_sideLength),1);
+	int ix = std::floor((x)/(3*_sideLength/2.))+		
+	  (b<0.5)*(-abs(a-.5)<(b-.5)*3)+(b>0.5)*(abs(a-.5)-.5<(b-1)*3);
+	int iy=std::floor((localPosition.Y-_offsetY)/(std::sqrt(3)*_sideLength/2.));
+	iy-=std::abs(ix+iy)%2;
 
 	
 	//int ix=int(floor((localPosition.X - _offsetX) / (3/2*_sideLength)));

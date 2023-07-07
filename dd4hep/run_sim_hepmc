@@ -3,7 +3,7 @@
 # Input simulation parameters
 particle="pi-"
 beam_energy=50
-num_events=1
+num_events=500
 theta_min=2.83 # in degrees
 theta_max=2.83 # in degrees
 phi_min=0. # in degrees
