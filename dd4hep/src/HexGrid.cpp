@@ -53,6 +53,21 @@ namespace dd4hep {
 	cellPosition.Y = _decoder->get(cID,_yId )*std::sqrt(3)/2*_sideLength+ _offsetY+_sideLength*std::sqrt(3)/2;
 	if (_stagger==1)
 	  cellPosition.X+=(layer%3)*_sideLength;
+	if (_stagger==2){
+	  switch (layer%4){
+	  case 1:
+	    cellPosition.X+=0.75*_sideLength;
+	    cellPosition.Y+=std::sqrt(3)/4*_sideLength;
+	    break;
+	  case 2:
+	    cellPosition.X-=0.75*_sideLength;
+	    cellPosition.Y+=std::sqrt(3)/4*_sideLength;
+	    break;
+	  case 3:
+	    cellPosition.X+=1.5*_sideLength;
+	    break;
+	  }
+	}
 	return cellPosition;
     }
 
@@ -70,15 +85,31 @@ namespace dd4hep {
 	double _gridSizeX=3*_sideLength/2;
 
 	double x=localPosition.X-_offsetX;
-
+	double y=localPosition.Y-_offsetY;
 	if (_stagger==1)
           x-=(layer%3)*_sideLength;
+
+	if (_stagger==2){
+          switch (layer%4){
+          case 1:
+            x-=0.75*_sideLength;
+            y-=std::sqrt(3)/4*_sideLength;
+            break;
+          case 2:
+            x+=0.75*_sideLength;
+            y-=std::sqrt(3)/4*_sideLength;
+            break;
+          case 3:
+            x-=1.5*_sideLength;
+	    break;
+          }
+        }
 	
-	double a=positive_modulo((localPosition.Y-_offsetY)/(std::sqrt(3)*_sideLength),1);
+	double a=positive_modulo((y)/(std::sqrt(3)*_sideLength),1);
 	double b=positive_modulo((x)/(3*_sideLength),1);
 	int ix = std::floor((x)/(3*_sideLength/2.))+		
 	  (b<0.5)*(-abs(a-.5)<(b-.5)*3)+(b>0.5)*(abs(a-.5)-.5<(b-1)*3);
-	int iy=std::floor((localPosition.Y-_offsetY)/(std::sqrt(3)*_sideLength/2.));
+	int iy=std::floor((y)/(std::sqrt(3)*_sideLength/2.));
 	iy-=std::abs(ix+iy)%2;
 
 	
