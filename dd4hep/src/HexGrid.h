@@ -102,7 +102,7 @@ namespace dd4hep {
 
     protected:
       /// the stagger mode:  0=off ; 1=cycle through 3 differnt offsets
-      int _stagger=1;
+      int _stagger;
       /// the length of one side of a hexagon
       double _sideLength;
       /// the coordinate offset in X
