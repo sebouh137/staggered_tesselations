@@ -31,7 +31,8 @@ void gen_particles(
 		    double phi_min = 0., // Minimum azimuthal angle, in degrees
                     double phi_max = 360., // Maximum azimuthal angle, in degrees
                     double p = 10.,  // Momentum in GeV/c
-		    int dist = 0  //Momentum distribution: 0=fixed, 1=uniform, 2=Gaussian
+		    int dist = 0,  //Momentum distribution: 0=fixed, 1=uniform, 2=Gaussian
+		    int useCrossingAngle=0  // 0= no rotation, 1 = -25 mrad
                   )
 { 
   WriterAscii hepmc_output(out_fname);
@@ -85,7 +86,7 @@ void gen_particles(
     TVector3 pvec(px,py,pz); 
 
     //Rotate to lab coordinate system
-    double cross_angle = -25./1000.; //in Rad
+    double cross_angle = -25./1000.*useCrossingAngle; //in Rad
     TVector3 pbeam_dir(sin(cross_angle),0,cos(cross_angle)); //proton beam direction
     pvec.RotateY(-pbeam_dir.Theta()); // Theta is returned positive, beam in negative X
     // type 1 is final state
