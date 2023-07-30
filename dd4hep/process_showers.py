@@ -60,8 +60,8 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
     #lay=arrays['HcalEndcapPInsertHitsReco.layer'][event]
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
     
-    tmp=sorted(list(set(z)))
-    dz=tmp[1]-tmp[0]
+    minz=min(z)
+    dz=min(z[z!=minz])-minz
     
     Etot=sum(E)
     thresh=Etot*np.exp(-w0)
@@ -75,6 +75,13 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
     phi=np.linspace(0, np.pi*5/3, 6)
     cph=np.cos(phi)
     sph=np.sin(phi)
+    roll_cph=np.roll(cph,1)
+    roll_sph=np.roll(sph,1)
+    
+    #centers of the triangles minus that of the hexagon
+    dx_tri=(cph+roll_cph)/3
+    dy_tri=(sph+roll_sph)/3
+    
     for i in range(len(x)):
         if E[i]<thresh:
             continue
@@ -101,13 +108,15 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
                     break
         a=thresh*b
         Eneighbors=np.array(Eneighbors)
-        #print(Eneighbors)
-        reweight_energy=mx(Eneighbors,a)*mx(np.roll(Eneighbors,1),a)
+
+        reweight_energy=mx(Eneighbors,a)*mx(np.roll(Eneighbors,1),a) 
         reweight_energy/=sum(reweight_energy)
-        #print(reweight_energy)
+
         for k in range(6):
-            xnew.append(x[i]+sl[i]*(cph[k]+cph[k-5])/3)
-            ynew.append(y[i]+sl[i]*(sph[k]+sph[k-5])/3)
+            if E[i]*reweight_energy[k]<thresh:
+                continue
+            xnew.append(x[i]+sl[i]*dx_tri[k])
+            ynew.append(y[i]+sl[i]*dy_tri[k])
             znew.append(z[i])
             Enew.append(E[i]*reweight_energy[k])
             slnew.append(sl[i]/sqrt5)
@@ -135,7 +144,7 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
     return [x_reco,y_reco,z_reco,r_reco]
 
 #with H4                                                                                                     
-def get_xyzr_reco_reweighted_H4(arrays, event, w0=5, weight_by_granularity=True, b=0.0001, prefix="ZDC"):
+def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True, b=0.0001, prefix="ZDC"):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
     y=arrays[f'{prefix}HitsReco.position.y'][event]
     z=arrays[f'{prefix}HitsReco.position.z'][event]
@@ -143,8 +152,8 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=5, weight_by_granularity=True,
 
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
 
-    tmp=sorted(list(set(z)))
-    dz=tmp[1]-tmp[0]
+    minz=min(z)
+    dz=min(z[z!=minz])-minz
 
     Etot=sum(E)
     thresh=Etot*np.exp(-w0)
@@ -154,8 +163,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=5, weight_by_granularity=True,
     ynew=[]
     znew=[]
     Enew=[]
-    dxnew=[]
-    dynew=[]
+    slnew=[]
     phi=np.linspace(0, np.pi*5/3, 6)
     cph=np.cos(phi)
     sph=np.sin(phi)
@@ -179,34 +187,44 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=5, weight_by_granularity=True,
                 if abs(dx+sqrt3/2*sph[k])<tol and abs(dy-sqrt3/2*cph[k])<tol:
                     Eneighbors[k+6]=E[j]
                     break
+        #print("??")
         a=thresh*b
         Eneighbors=mx(np.array(Eneighbors),a)
-        reweight_energy=np.array([0,0,0,0,0,0,0,0,0,0,0,0])
-        reweight_energy[:6]=Eneighbors[:6]*np.roll(Eneighbors[6:],4)*np.roll(Eneighbors[6:],5)
-        reweight_energy[6:]=Eneighbors[6:]*np.roll(Eneighbors[6:],-1)*np.roll(Eneighbors[6:],1)
-        reweight_energy/=sum(reweight_energy)
+        #print("????")
         
+        reweight_energy_1=Eneighbors[:6]*np.roll(Eneighbors[6:],4)*np.roll(Eneighbors[6:],5)
+        reweight_energy_2=Eneighbors[6:]*np.roll(Eneighbors[6:],-1)*np.roll(Eneighbors[6:],1)
+        reweight_energy=np.concatenate([reweight_energy_1, reweight_energy_2])
+        #print(reweight_energy)
+        #print(Eneighbors)
+        reweight_energy/=sum(reweight_energy)
+
+
         for k in range(6):
+            if E[i]*reweight_energy[k]< thresh:
+                continue
             xnew.append(x[i]+sl[i]*0.75*cph[k])
             ynew.append(y[i]+sl[i]*0.75*sph[k])
             znew.append(z[i])
             Enew.append(E[i]*reweight_energy[k])
-            dxnew.append(sl[i]/sqrt5)
-            dynew.append(sl[i]/sqrt5)
+            slnew.append(sl[i]/sqrt5)
+        #print("d")
         for k in range(6):
+            if E[i]*reweight_energy[k+6]<thresh:
+                continue
             xnew.append(x[i]+sl[i]*sqrt3/4*-sph[k])
             ynew.append(y[i]+sl[i]*sqrt3/4*cph[k])
             znew.append(z[i])
             Enew.append(E[i]*reweight_energy[k+6])
-            dxnew.append(sl[i]/sqrt5)
-            dynew.append(sl[i]/sqrt5)
-
+            slnew.append(sl[i]/sqrt5)
+        #print("e")
+    
     xnew=np.array(xnew)
     ynew=np.array(ynew)
     znew=np.array(znew)
     Enew=np.array(Enew)
-    dxnew=np.array(dxnew)
-    dynew=np.array(dxnew)
+    
+    slnew=np.array(slnew)
 
     if w0 !=0:
         w=w0+np.log((Enew+.0000001)/Etot)
@@ -241,6 +259,8 @@ if __name__ == "__main__":
 
     parser.add_argument('-n', '--nevents', help="number of events to run", default=-1, type=int)
     parser.add_argument("-p", '--prefix', help="prefix for the detector type (hit type)", default="ZDC")
+    parser.add_argument("-s", '--skip', help="number of events to skip", default=0, type=int)
+    parser.add_argument("--w0_rw", help="w0 used in reweighted", default=5, type=float)
     args = parser.parse_args()
     
     import sys
@@ -250,9 +270,14 @@ if __name__ == "__main__":
     useH4reweighting=args.H4
     nevents=args.nevents
     prefix=args.prefix
+    first_event=args.skip
     arrays=ur.open(f'{infile}:events').arrays()
-    w0=5; b=0.05
+    w0=args.w0_rw
+    b=0.05
     w0_nrw=4
+
+    x_truths=[]
+    y_truths=[]
     drs=[]
     drs_rw=[]
     dxs=[]
@@ -265,7 +290,7 @@ if __name__ == "__main__":
     if nevents==-1:
         nevents=len(arrays)
     
-    for event in range(nevents):
+    for event in range(first_event,first_event+nevents):
         #print(arrays['ZDCHitsReco.energy'][event])
         #print(len(arrays['ZDCHitsReco.position.x'][event]))
         try:
@@ -280,7 +305,9 @@ if __name__ == "__main__":
             drs.append(r_reco-r_truth)
             dxs.append(x_reco-x_truth)
             dys.append(y_reco-y_truth)
-            if useH3reweighting:
+            x_truths.append(x_truth)
+            y_truths.append(y_truth)
+            if useH3reweighting or useH4reweighting:
                 drs_rw.append(r_reco_rw-r_truth)
                 dxs_rw.append(x_reco_rw-x_truth)
                 dys_rw.append(y_reco_rw-y_truth)
@@ -291,8 +318,8 @@ if __name__ == "__main__":
 
         if event%10==0:
             print(f"{infile}: done with event {event}/{nevents}")
-    d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs)
-    if useH3reweighting:
+    d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
+    if useH3reweighting or useH4reweighting:
         d["dr_rw"]=drs_rw
         d["dx_rw"]=dxs_rw
         d["dy_rw"]=dys_rw
