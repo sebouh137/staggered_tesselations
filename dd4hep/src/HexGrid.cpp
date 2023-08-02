@@ -57,7 +57,6 @@ namespace dd4hep {
 	  cellPosition.X+=(layer%3)*_sideLength;
 	else if (_stagger==2){
 	  switch (layer%4){
-	    cellPosition.X+=_sideLength;
 	  case 0:
 	    cellPosition.X-=0.75*_sideLength;
 	    break;
@@ -97,7 +96,6 @@ namespace dd4hep {
 	else if (_stagger==1)
           x-=(layer%3)*_sideLength;
 	else if (_stagger==2){
-          x-=_sideLength;
           switch (layer%4){
 	  case 0:
 	    x+=0.75*_sideLength;
