@@ -11,7 +11,13 @@ from GaudiKernel.SystemOfUnits import MeV, GeV, mm, cm, mrad
 
 #detector_name = str(os.environ.get("JUGGLER_DETECTOR", "endcapP_insert"))
 #detector_path = str(os.environ.get("DETECTOR_PATH", "."))
-detector_name = "zdc"
+
+if "staggered_h3" in os.environ["JUGGLER_SIM_FILE"]:
+    detector_name = "zdc_staggered_h3"
+elif "staggered_h4" in os.environ["JUGGLER_SIM_FILE"]:
+    detector_name = "zdc_staggered_h4"
+elif "unstaggered" in os.environ["JUGGLER_SIM_FILE"]:
+    detector_name = "zdc_unstaggered"
 detector_path = "."
 compact_path = os.path.join(detector_path, detector_name)
 
