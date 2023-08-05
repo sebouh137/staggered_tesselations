@@ -7,17 +7,18 @@ def get_xyzr_reco_no_reweighting(arrays, event, w0=4, weight_by_granularity=True
     E=arrays[f'{prefix}HitsReco.energy'][event]
     #lay=arrays['HcalEndcapPInsertHitsReco.layer'][event]
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
-    if w0 !=0:
+    if type(w0)!=float or w0 !=0 :
         w=w0+np.log((E+.0000001)/sum(E))
         w=w*(w>0)
     else :
         w=E
     if weight_by_granularity:
         w=w/sl**2
-    sumw=sum(w)
-    x_reco=sum(x*w)/sumw
-    y_reco=sum(y*w)/sumw
-    z_reco=sum(z*w)/sumw
+    
+    sumw=np.sum(w+.0000001, axis=-1)
+    x_reco=np.sum(x*w, axis=-1)/sumw
+    y_reco=np.sum(y*w, axis=-1)/sumw
+    z_reco=np.sum(z*w, axis=-1)/sumw
     r_reco=np.hypot(x_reco,y_reco)
     return [x_reco,y_reco,z_reco,r_reco]
 
@@ -26,14 +27,15 @@ def get_xyzr_truth(arrays, event, w0=4, weight_by_granularity=True, prefix="ZDC"
     E=arrays[f'{prefix}HitsReco.energy'][event]
     #lay=arrays['HcalEndcapPInsertHitsReco.layer'][event]
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]
-    if w0 !=0:
+    if type(w0)!= float or w0 !=0:
         w=w0+np.log((E+.0000001)/sum(E))
         w=w*(w>0)
     else :
         w=E
     if weight_by_granularity:
         w=w/sl**2
-    z_reco=sum(z*w)/sum(w)
+    #w+=.000000001
+    z_reco=np.sum(z*w, axis=-1)/np.sum(w+.000000001, axis=-1)
     
     px=arrays["MCParticles.momentum.x"][event,2]
     py=arrays["MCParticles.momentum.y"][event,2]
@@ -52,7 +54,7 @@ sqrt5=np.sqrt(5)
 def mx(a,b):
     return a*(a>b)+b*(b>=a)
 #with H3
-def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True, b=0.00001, prefix="ZDC"):
+def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True, prefix="ZDC", MIP=0.000472):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
     y=arrays[f'{prefix}HitsReco.position.y'][event]
     z=arrays[f'{prefix}HitsReco.position.z'][event]
@@ -64,7 +66,7 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
     dz=min(z[z!=minz])-minz
     
     Etot=sum(E)
-    thresh=Etot*np.exp(-w0)
+    thresh=Etot*np.exp(-np.max(w0))
     
     
     xnew=[]
@@ -106,10 +108,10 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
                     #print(Eneighbors, E[j])
                     neighbors_found+=1
                     break
-        a=thresh*b
+        #a=thresh*b
         Eneighbors=np.array(Eneighbors)
 
-        reweight_energy=mx(Eneighbors,a)*mx(np.roll(Eneighbors,1),a) 
+        reweight_energy=mx(Eneighbors,MIP)*mx(np.roll(Eneighbors,1),MIP) 
         reweight_energy/=sum(reweight_energy)
 
         for k in range(6):
@@ -128,23 +130,24 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
     slnew=np.array(slnew)
     
     
-    if w0 !=0:
+    if type(w0)!=float or  w0 !=0:
         w=w0+np.log((Enew+.0000001)/Etot)
         w=w*(w>0)
     else :
         w=Enew
     if weight_by_granularity:
         w=w/slnew**2
+    #w+=.000000001
     #print(w, Enew/Etot/thresh)
-    sumw=np.sum(w)
-    x_reco=np.sum(xnew*w)/sumw
-    y_reco=np.sum(ynew*w)/sumw
-    z_reco=np.sum(znew*w)/sumw
+    sumw=np.sum(w+.0000001, axis=-1)
+    x_reco=np.sum(xnew*w, axis=-1)/sumw
+    y_reco=np.sum(ynew*w, axis=-1)/sumw
+    z_reco=np.sum(znew*w, axis=-1)/sumw
     r_reco=np.hypot(x_reco,y_reco)
     return [x_reco,y_reco,z_reco,r_reco]
 
 #with H4                                                                                                     
-def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True, b=0.0001, prefix="ZDC"):
+def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True, prefix="ZDC", MIP=0.000472):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
     y=arrays[f'{prefix}HitsReco.position.y'][event]
     z=arrays[f'{prefix}HitsReco.position.z'][event]
@@ -156,7 +159,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
     dz=min(z[z!=minz])-minz
 
     Etot=sum(E)
-    thresh=Etot*np.exp(-w0)
+    thresh=Etot*np.exp(-np.max(w0))
 
 
     xnew=[]
@@ -167,6 +170,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
     phi=np.linspace(0, np.pi*5/3, 6)
     cph=np.cos(phi)
     sph=np.sin(phi)
+    #print("bbb")
     for i in range(len(x)):
         if E[i]<thresh:
             continue
@@ -188,8 +192,8 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
                     Eneighbors[k+6]=E[j]
                     break
         #print("??")
-        a=thresh*b
-        Eneighbors=mx(np.array(Eneighbors),a)
+
+        Eneighbors=mx(np.array(Eneighbors),MIP)
         #print("????")
         
         reweight_energy_1=Eneighbors[:6]*np.roll(Eneighbors[6:],4)*np.roll(Eneighbors[6:],5)
@@ -199,7 +203,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
         #print(Eneighbors)
         reweight_energy/=sum(reweight_energy)
 
-
+        #print("aaa")
         for k in range(6):
             if E[i]*reweight_energy[k]< thresh:
                 continue
@@ -208,7 +212,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
             znew.append(z[i])
             Enew.append(E[i]*reweight_energy[k])
             slnew.append(sl[i]/sqrt5)
-        #print("d")
+        #print("ddd")
         for k in range(6):
             if E[i]*reweight_energy[k+6]<thresh:
                 continue
@@ -217,7 +221,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
             znew.append(z[i])
             Enew.append(E[i]*reweight_energy[k+6])
             slnew.append(sl[i]/sqrt5)
-        #print("e")
+        #print("eee")
     
     xnew=np.array(xnew)
     ynew=np.array(ynew)
@@ -225,20 +229,22 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
     Enew=np.array(Enew)
     
     slnew=np.array(slnew)
-
-    if w0 !=0:
+    #print("fff")
+        
+    if type(w0)!=float or  w0 !=0:
         w=w0+np.log((Enew+.0000001)/Etot)
         w=w*(w>0)
     else :
         w=Enew
     if weight_by_granularity:
         w=w/slnew**2
-    
-    sumw=np.sum(w)
-    x_reco=np.sum(xnew*w)/sumw
-    y_reco=np.sum(ynew*w)/sumw
-    z_reco=np.sum(znew*w)/sumw
+    #print("ggg")
+    sumw=np.sum(w+.0000001, axis=-1)
+    x_reco=np.sum(xnew*w, axis=-1)/sumw
+    y_reco=np.sum(ynew*w, axis=-1)/sumw
+    z_reco=np.sum(znew*w, axis=-1)/sumw
     r_reco=np.hypot(x_reco,y_reco)
+    #print("hh")
     return [x_reco,y_reco,z_reco,r_reco]
 
 
@@ -261,6 +267,9 @@ if __name__ == "__main__":
     parser.add_argument("-p", '--prefix', help="prefix for the detector type (hit type)", default="ZDC")
     parser.add_argument("-s", '--skip', help="number of events to skip", default=0, type=int)
     parser.add_argument("--w0_rw", help="w0 used in reweighted", default=5, type=float)
+    parser.add_argument("--w0_nrw", help="w0 used in reweighted", default=4, type=float)
+    parser.add_argument("--w0_use_range", help="use a range for w0", action="store_true")
+    parser.add_argument("--MIP", help="MIP value in GeV", default=0.000472, type=float)
     args = parser.parse_args()
     
     import sys
@@ -273,9 +282,13 @@ if __name__ == "__main__":
     first_event=args.skip
     arrays=ur.open(f'{infile}:events').arrays()
     w0=args.w0_rw
-    b=0.05
-    w0_nrw=4
+    MIP=args.MIP
+    w0_nrw=args.w0_nrw
 
+    w0_use_range=args.w0_use_range
+    if w0_use_range:
+        w0_nrw=np.array([[a] for a in np.linspace(3.0, 8.0, 21)])
+        w0=np.array([[a] for a in np.linspace(3.0, 8.0, 21)])
     x_truths=[]
     y_truths=[]
     drs=[]
@@ -286,7 +299,7 @@ if __name__ == "__main__":
     dys_rw=[]
     Es=[]
     mc_pzs=[]
-
+    w0s=[]
     if nevents==-1:
         nevents=len(arrays)
     
@@ -297,9 +310,9 @@ if __name__ == "__main__":
 
             x_reco, y_reco, _, r_reco=get_xyzr_reco_no_reweighting(arrays, event, w0=w0_nrw, weight_by_granularity=True, prefix=prefix)
             if useH3reweighting:
-                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H3(arrays, event, w0=w0, b=b, weight_by_granularity=True, prefix=prefix)
+                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H3(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
             elif useH4reweighting:
-                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H4(arrays, event, w0=w0, b=b, weight_by_granularity=True, prefix=prefix)
+                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H4(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
             x_truth, y_truth, _, r_truth=get_xyzr_truth(arrays, event, w0=w0, weight_by_granularity=True, prefix=prefix)
             #print(r_truth, r_reco)
             drs.append(r_reco-r_truth)
@@ -313,15 +326,38 @@ if __name__ == "__main__":
                 dys_rw.append(y_reco_rw-y_truth)
             Es.append(sum(arrays[f'{prefix}HitsReco.energy'][event]))
             mc_pzs.append(arrays[f'MCParticles.momentum.z'][event,2])
+            if w0_use_range:
+                w0s.append(w0)
         except:
             pass
 
         if event%10==0:
             print(f"{infile}: done with event {event}/{nevents}")
-    d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
-    if useH3reweighting or useH4reweighting:
-        d["dr_rw"]=drs_rw
-        d["dx_rw"]=dxs_rw
-        d["dy_rw"]=dys_rw
+    if not w0_use_range:
+        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
+        if useH3reweighting or useH4reweighting:
+            d["dr_rw"]=drs_rw
+            d["dx_rw"]=dxs_rw
+            d["dy_rw"]=dys_rw
+    else :
+        w0s = [a[0] for a in w0] # flatten array
+        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
+        if useH3reweighting or useH4reweighting:
+            d["dr_rw"]=drs_rw
+            d["dx_rw"]=dxs_rw
+            d["dy_rw"]=dys_rw
+        for key in list(d.keys()):
+            #print(key)
+            #print(type(d[key]))
+            #print(d[key][0])
+            if key not in "E mc_pz w0s".split():
+                print("making new columns")
+                for i in range(len(w0s)):
+                    d[f"{key}_w0_{w0s[i]}".replace(".", "pt")]=[d[key][j][i] for j in range(len(d[key]))]
+            
+    
     print({a:len(d[a]) for a in d})
-    pd.DataFrame(d).to_csv(outfile)
+    if ".csv" in outfile:
+        pd.DataFrame(d).to_csv(outfile)
+    if ".pkl" in outfile:
+        pd.DataFrame(d).to_pickle(outfile)
