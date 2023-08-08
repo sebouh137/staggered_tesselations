@@ -176,7 +176,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
             continue
         Eneighbors=[0,0,0,0,0,0,0,0,0,0,0,0]
         for j in range(len(x)):
-            if abs(z[i]-z[j])>dz*1.1 or  E[j]<thresh or  j == i :
+            if abs(z[i]-z[j])>dz*2.1 or  E[j]<thresh or  j == i :
                 continue
             dx=(x[j]-x[i])/sl[i]
             dy=(y[j]-y[i])/sl[i]
@@ -185,11 +185,11 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
             tol=0.01
             for k in range(6):
                 if abs(dx-1.5*cph[k])<tol and abs(dy-1.5*sph[k])<tol:
-                    Eneighbors[k]=E[j]
+                    Eneighbors[k]+=E[j]
                     break
             for k in range(6):
                 if abs(dx+sqrt3/2*sph[k])<tol and abs(dy-sqrt3/2*cph[k])<tol:
-                    Eneighbors[k+6]=E[j]
+                    Eneighbors[k+6]+=E[j]
                     break
         #print("??")
 
