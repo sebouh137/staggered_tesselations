@@ -18,6 +18,10 @@ elif "staggered_h4" in os.environ["JUGGLER_SIM_FILE"]:
     detector_name = "zdc_staggered_h4"
 elif "unstaggered" in os.environ["JUGGLER_SIM_FILE"]:
     detector_name = "zdc_unstaggered"
+elif "s1" in os.environ["JUGGLER_SIM_FILE"]:
+    detector_name = "zdc_s1_inf"
+elif "s2" in os.environ["JUGGLER_SIM_FILE"]:
+    detector_name = "zdc_s2_inf"
 detector_path = "."
 compact_path = os.path.join(detector_path, detector_name)
 
