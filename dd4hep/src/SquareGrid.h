@@ -10,10 +10,10 @@
 //==========================================================================
 
 /*
- * CartesianGrid.h
+ * SquareGrid.h
  *
- *  Created on: Jun 28, 2013
- *      Author: Christian Grefe, CERN
+ *  Created on: August 9, 2023
+ *      Author: Sebouh J. Paul, UC Riverside
  */
 
 #ifndef DDSEGMENTATION_SQUAREGRID_H

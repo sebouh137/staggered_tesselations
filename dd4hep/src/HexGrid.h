@@ -12,8 +12,8 @@
 /*
  * CartesianGrid.h
  *
- *  Created on: Jun 28, 2013
- *      Author: Christian Grefe, CERN
+ *  Created on: August 9, 2023
+ *      Author: Sebouh J. Paul, UC Riverside
  */
 
 #ifndef DDSEGMENTATION_HEXGRID_H
@@ -101,13 +101,14 @@ namespace dd4hep {
       virtual std::vector<double> cellDimensions(const CellID& cellID) const;
 
     protected:
-      /// the stagger mode:  0=off ; 1=cycle through 3 differnt offsets
+      /// the stagger mode:  0=off ; 1=cycle through 3 different offsets (H3)
+      //  2=cycle through 4 differnt offsets (H4)
       int _stagger;
       /// the length of one side of a hexagon
       double _sideLength;
       /// the coordinate offset in X
       double _offsetX;
-      /// the grid size in Y
+      /// the coordinate offset in Y
       double _offsetY;
       /// the field name used for X
       std::string _xId;
@@ -117,4 +118,4 @@ namespace dd4hep {
 
   } /* namespace DDSegmentation */
 } /* namespace dd4hep */
-#endif // DDSEGMENTATION_CARTESIANGRID_H
+#endif // DDSEGMENTATION_HEXGRID_H

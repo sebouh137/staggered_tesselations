@@ -1,8 +1,8 @@
 /*
- * CartesianGrid.cpp
+ * HexGrid.cpp
  *
- *  Created on: Jun 28, 2013
- *      Author: Christian Grefe, CERN
+ *  Created on: August 9, 2023
+ *      Author: Sebouh J. Paul, UC Riverside
  */
 #include "DD4hep/Factories.h"
 #include "HexGrid.h"

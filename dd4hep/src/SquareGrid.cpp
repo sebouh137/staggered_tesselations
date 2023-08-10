@@ -1,7 +1,7 @@
 /*
- * CartesianGrid.cpp
- *
- *  Created on: Jun 28, 2013
+ *  SquareGrid.cpp
+ *  A square grid in X,Y which has options for staggering in the S2 pattern
+ *  Created on: August 9, 2023
  *      Author: Sebouh J. Paul, UC Riverside
  */
 #include "DD4hep/Factories.h"
@@ -90,11 +90,11 @@ namespace dd4hep {
 
     std::vector<double> SquareGrid::cellDimensions(const CellID&) const {
 #if __cplusplus >= 201103L
-      return {2*_sideLength, std::sqrt(3)*_sideLength};
+      return {_sideLength, _sideLength};
 #else
       std::vector<double> cellDims(2,0.0);
-      cellDims[0] = 2*_sideLength;
-      cellDims[1] = std::sqrt(3)*_sideLength;
+      cellDims[0] = _sideLength;
+      cellDims[1] = _sideLength;
       return cellDims;
 #endif
 }
