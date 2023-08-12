@@ -247,7 +247,101 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
     #print("hh")
     return [x_reco,y_reco,z_reco,r_reco]
 
+sqrt2=np.sqrt(2)
+#with S2
+def get_xyzr_reco_reweighted_S2(arrays, event, w0=6, weight_by_granularity=True, prefix="ZDC", MIP=0.000472):
+    x=arrays[f'{prefix}HitsReco.position.x'][event]
+    y=arrays[f'{prefix}HitsReco.position.y'][event]
+    z=arrays[f'{prefix}HitsReco.position.z'][event]
+    E=arrays[f'{prefix}HitsReco.energy'][event]
+    
+    #side length
+    sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
+    #print("sidelength:",sl[0])
 
+    minz=min(z)
+    dz=min(z[z!=minz])-minz
+
+    Etot=sum(E)
+    thresh=Etot*np.exp(-np.max(w0))
+
+
+    xnew=[]
+    ynew=[]
+    znew=[]
+    Enew=[]
+    slnew=[]
+    phi=np.linspace(np.pi/4, np.pi*7/4, 4)
+    cph=np.cos(phi)
+    sph=np.sin(phi)
+    #print("bbb")
+    for i in range(len(x)):
+        if E[i]<thresh:
+            continue
+        neighbors_found = 0
+        Eneighbors=[0,0,0,0]
+        for j in range(len(x)):
+                                
+            if abs(z[i]-z[j])>dz*1.1 or  E[j]<thresh or  j == i or z[i]==z[j] :
+                continue
+            dx=(x[j]-x[i])/sl[i]
+            dy=(y[j]-y[i])/sl[i]
+            if abs(dx)>0.6 or abs(dy)>0.6:
+                continue
+            tol=0.01
+            for k in range(4):
+                if abs(dx-sqrt2*cph[k]/2)<tol and abs(dy-sqrt2*sph[k]/2)<tol:
+                    Eneighbors[k]+=E[j]
+                    neighbors_found+=1
+                    break
+            if neighbors_found == 8:
+                break
+            
+        #print("??")
+
+        Eneighbors=mx(np.array(Eneighbors),MIP)
+        #print("Eneighbors:", Eneighbors)
+        
+        reweight_energy=Eneighbors/sum(Eneighbors)
+        #print("reweight_energy:", reweight_energy)
+        #print(reweight_energy)
+        #print(Eneighbors)
+        #reweight_energy/=sum(reweight_energy)
+
+        #print("aaa")
+        for k in range(4):
+            if E[i]*reweight_energy[k]< thresh:
+                continue
+            xnew.append(x[i]+sl[i]*sqrt2/4*cph[k])
+            ynew.append(y[i]+sl[i]*sqrt2/4*sph[k])
+            znew.append(z[i])
+            Enew.append(E[i]*reweight_energy[k])
+            slnew.append(sl[i]/2)
+        
+    
+    xnew=np.array(xnew)
+    ynew=np.array(ynew)
+    znew=np.array(znew)
+    Enew=np.array(Enew)
+    
+    slnew=np.array(slnew)
+    #print("fff")
+        
+    if type(w0)!=float or  w0 !=0:
+        w=w0+np.log((Enew+.0000001)/Etot)
+        w=w*(w>0)
+    else :
+        w=Enew
+    if weight_by_granularity:
+        w=w/slnew**2
+    #print("ggg")
+    sumw=np.sum(w+.0000001, axis=-1)
+    x_reco=np.sum(xnew*w, axis=-1)/sumw
+    y_reco=np.sum(ynew*w, axis=-1)/sumw
+    z_reco=np.sum(znew*w, axis=-1)/sumw
+    r_reco=np.hypot(x_reco,y_reco)
+    #print("hh")
+    return [x_reco,y_reco,z_reco,r_reco]
 
 
 if __name__ == "__main__":
@@ -262,7 +356,8 @@ if __name__ == "__main__":
                     action='store_true')  # on/off flag
     parser.add_argument('--H3',	help="flag for using H3 HEX-SPLIT",
                     action='store_true')  # on/off flag 
-
+    parser.add_argument('--S2',  help="flag for using S2 HEX-SPLIT",
+                    action='store_true')  # on/off flag
     parser.add_argument('-n', '--nevents', help="number of events to run", default=-1, type=int)
     parser.add_argument("-p", '--prefix', help="prefix for the detector type (hit type)", default="ZDC")
     parser.add_argument("-s", '--skip', help="number of events to skip", default=0, type=int)
@@ -277,6 +372,7 @@ if __name__ == "__main__":
     outfile=args.outfile
     useH3reweighting=args.H3
     useH4reweighting=args.H4
+    useS2reweighting=args.S2
     nevents=args.nevents
     prefix=args.prefix
     first_event=args.skip
@@ -313,6 +409,9 @@ if __name__ == "__main__":
                 x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H3(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
             elif useH4reweighting:
                 x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H4(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
+            elif useS2reweighting:
+                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_S2(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
+
             x_truth, y_truth, _, r_truth=get_xyzr_truth(arrays, event, w0=w0, weight_by_granularity=True, prefix=prefix)
             #print(r_truth, r_reco)
             drs.append(r_reco-r_truth)
@@ -320,7 +419,7 @@ if __name__ == "__main__":
             dys.append(y_reco-y_truth)
             x_truths.append(x_truth)
             y_truths.append(y_truth)
-            if useH3reweighting or useH4reweighting:
+            if useH3reweighting or useH4reweighting or useS2reweighting:
                 drs_rw.append(r_reco_rw-r_truth)
                 dxs_rw.append(x_reco_rw-x_truth)
                 dys_rw.append(y_reco_rw-y_truth)
@@ -335,14 +434,14 @@ if __name__ == "__main__":
             print(f"{infile}: done with event {event}/{nevents}")
     if not w0_use_range:
         d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
-        if useH3reweighting or useH4reweighting:
+        if useH3reweighting or useH4reweighting or useS2reweighting:
             d["dr_rw"]=drs_rw
             d["dx_rw"]=dxs_rw
             d["dy_rw"]=dys_rw
     else :
         w0s = [a[0] for a in w0] # flatten array
         d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
-        if useH3reweighting or useH4reweighting:
+        if useH3reweighting or useH4reweighting or useS2reweighting:
             d["dr_rw"]=drs_rw
             d["dx_rw"]=dxs_rw
             d["dy_rw"]=dys_rw
