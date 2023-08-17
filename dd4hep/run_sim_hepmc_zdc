@@ -40,5 +40,5 @@ npsim \
 rm ${hepmcfile}
 
 # Running reconstruction
-export JUGGLER_SIM_FILE=${simfile} JUGGLER_REC_FILE=${recofile} JUGGLER_N_EVENTS=${num_events}
+export JUGGLER_SIM_FILE=${simfile} JUGGLER_REC_FILE=${recofile} JUGGLER_N_EVENTS=${num_events} JUGGLER_DETECTOR_NAME=${config}
 gaudirun.py zdc_reco.py

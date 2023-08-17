@@ -9,6 +9,7 @@
     <include ref="compact/definitions.xml" />
     <include ref="compact/configuration_zdc.xml"/>
     <constant name="ZDCstagger"      value="2"/>
+    <constant name="ZDCHexSideLength" value="3.13*cm"/>
   </define>
 
   <includes>

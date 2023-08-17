@@ -1,12 +1,26 @@
 import uproot as ur, numpy as np, pandas as pd
 
-def get_xyzr_reco_no_reweighting(arrays, event, w0=4, weight_by_granularity=True, prefix="ZDC"):
+c_in_mm_per_ns = 299.792458
+
+#default values.  Can be configured
+Emin=0.000472*0.1 # 1/10 a MIP
+tmax=200 # 200 ns
+
+def get_xyzr_reco_no_reweighting(arrays, event, w0=4, weight_by_granularity=True, prefix="ZDC", MIP=0.00047):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
     y=arrays[f'{prefix}HitsReco.position.y'][event]
     z=arrays[f'{prefix}HitsReco.position.z'][event]
     E=arrays[f'{prefix}HitsReco.energy'][event]
-    #lay=arrays['HcalEndcapPInsertHitsReco.layer'][event]
+    t=arrays[f'{prefix}HitsReco.time'][event] - z/c_in_mm_per_ns #correct for time of flight
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
+    #make selection of hits to be used
+    slc=(E>Emin) & (t<tmax)
+    x=x[slc]
+    y=y[slc]
+    z=z[slc]
+    E=E[slc]
+    sl=sl[slc]
+
     if type(w0)!=float or w0 !=0 :
         w=w0+np.log((E+.0000001)/sum(E))
         w=w*(w>0)
@@ -23,10 +37,19 @@ def get_xyzr_reco_no_reweighting(arrays, event, w0=4, weight_by_granularity=True
     return [x_reco,y_reco,z_reco,r_reco]
 
 def get_xyzr_truth(arrays, event, w0=4, weight_by_granularity=True, prefix="ZDC"):
+    #first determine the z value used in the recon
     z=arrays[f'{prefix}HitsReco.position.z'][event]
     E=arrays[f'{prefix}HitsReco.energy'][event]
-    #lay=arrays['HcalEndcapPInsertHitsReco.layer'][event]
+    t=arrays[f'{prefix}HitsReco.time'][event] - z/c_in_mm_per_ns #correct for time of flight
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]
+    
+    #make selection
+    slc=(E>Emin) & (t<tmax)
+    z=z[slc]
+    E=E[slc]
+    t=t[slc]
+    sl=sl[slc]
+    
     if type(w0)!= float or w0 !=0:
         w=w0+np.log((E+.0000001)/sum(E))
         w=w*(w>0)
@@ -34,7 +57,7 @@ def get_xyzr_truth(arrays, event, w0=4, weight_by_granularity=True, prefix="ZDC"
         w=E
     if weight_by_granularity:
         w=w/sl**2
-    #w+=.000000001
+    
     z_reco=np.sum(z*w, axis=-1)/np.sum(w+.000000001, axis=-1)
     
     px=arrays["MCParticles.momentum.x"][event,2]
@@ -57,17 +80,28 @@ def mx(a,b):
 def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True, prefix="ZDC", MIP=0.000472):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
     y=arrays[f'{prefix}HitsReco.position.y'][event]
-    z=arrays[f'{prefix}HitsReco.position.z'][event]
+    z=arrays[f'{prefix}HitsReco.position.z'][event] 
     E=arrays[f'{prefix}HitsReco.energy'][event]
     #lay=arrays['HcalEndcapPInsertHitsReco.layer'][event]
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
+    t=arrays[f'{prefix}HitsReco.time'][event]  - z/c_in_mm_per_ns #correct for time of flight
+    slc=(E>Emin) & (t<tmax)
+    x=x[slc]
+    y=y[slc]
+    z=z[slc]
+    E=E[slc]
+    sl=sl[slc]
+
     
     minz=min(z)
     dz=min(z[z!=minz])-minz
     
     Etot=sum(E)
-    thresh=Etot*np.exp(-np.max(w0))
-    
+    if type(w0) !=float or  w0 != 0.0:
+        thresh=Etot*np.exp(-np.max(w0))
+    else :
+        thresh = 0
+    #print("thresh", thresh)
     
     xnew=[]
     ynew=[]
@@ -90,6 +124,7 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
         neighbors_found=0
         Eneighbors=[0,0,0,0,0,0]
         for j in range(len(x)):
+
             if abs(z[i]-z[j])>dz*1.1 or E[j]<thresh or z[i]==z[j]:
                 continue
             dx=(x[j]-x[i])/sl[i]
@@ -97,8 +132,11 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
             if abs(dx)>1.1 or abs(dy)>1.1:
                 continue
             tol=0.01
+
+            
             if neighbors_found==6:
                 break
+            
             for k in range(6):
                 if Eneighbors[k]:
                     continue
@@ -109,6 +147,7 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
                     neighbors_found+=1
                     break
         #a=thresh*b
+        
         Eneighbors=np.array(Eneighbors)
 
         reweight_energy=mx(Eneighbors,MIP)*mx(np.roll(Eneighbors,1),MIP) 
@@ -137,8 +176,7 @@ def get_xyzr_reco_reweighted_H3(arrays, event, w0=5, weight_by_granularity=True,
         w=Enew
     if weight_by_granularity:
         w=w/slnew**2
-    #w+=.000000001
-    #print(w, Enew/Etot/thresh)
+
     sumw=np.sum(w+.0000001, axis=-1)
     x_reco=np.sum(xnew*w, axis=-1)/sumw
     y_reco=np.sum(ynew*w, axis=-1)/sumw
@@ -152,14 +190,25 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
     y=arrays[f'{prefix}HitsReco.position.y'][event]
     z=arrays[f'{prefix}HitsReco.position.z'][event]
     E=arrays[f'{prefix}HitsReco.energy'][event]
-
+    t=arrays[f'{prefix}HitsReco.time'][event] - z/c_in_mm_per_ns #correct for time of flight
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
+    # time and energy cuts
+    slc=(E>Emin) & (t<tmax)
+    x=x[slc]
+    y=y[slc]
+    z=z[slc]
+    E=E[slc]
+    sl=sl[slc]
+    
 
     minz=min(z)
     dz=min(z[z!=minz])-minz
 
     Etot=sum(E)
-    thresh=Etot*np.exp(-np.max(w0))
+    if type(w0) !=float or  w0 != 0.0:
+        thresh=Etot*np.exp(-np.max(w0))
+    else :
+        thresh = 0
 
 
     xnew=[]
@@ -170,10 +219,11 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
     phi=np.linspace(0, np.pi*5/3, 6)
     cph=np.cos(phi)
     sph=np.sin(phi)
-    #print("bbb")
+
     for i in range(len(x)):
         if E[i]<thresh:
             continue
+        # there are twelve neighboring cell positions where we need to determine the energy
         Eneighbors=[0,0,0,0,0,0,0,0,0,0,0,0]
         for j in range(len(x)):
             if abs(z[i]-z[j])>dz*2.1 or  E[j]<thresh or  j == i :
@@ -191,19 +241,15 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
                 if abs(dx+sqrt3/2*sph[k])<tol and abs(dy-sqrt3/2*cph[k])<tol:
                     Eneighbors[k+6]+=E[j]
                     break
-        #print("??")
-
+        
         Eneighbors=mx(np.array(Eneighbors),MIP)
-        #print("????")
+        
         
         reweight_energy_1=Eneighbors[:6]*np.roll(Eneighbors[6:],4)*np.roll(Eneighbors[6:],5)
         reweight_energy_2=Eneighbors[6:]*np.roll(Eneighbors[6:],-1)*np.roll(Eneighbors[6:],1)
         reweight_energy=np.concatenate([reweight_energy_1, reweight_energy_2])
-        #print(reweight_energy)
-        #print(Eneighbors)
         reweight_energy/=sum(reweight_energy)
 
-        #print("aaa")
         for k in range(6):
             if E[i]*reweight_energy[k]< thresh:
                 continue
@@ -212,7 +258,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
             znew.append(z[i])
             Enew.append(E[i]*reweight_energy[k])
             slnew.append(sl[i]/sqrt5)
-        #print("ddd")
+        
         for k in range(6):
             if E[i]*reweight_energy[k+6]<thresh:
                 continue
@@ -221,7 +267,7 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
             znew.append(z[i])
             Enew.append(E[i]*reweight_energy[k+6])
             slnew.append(sl[i]/sqrt5)
-        #print("eee")
+        
     
     xnew=np.array(xnew)
     ynew=np.array(ynew)
@@ -229,7 +275,6 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
     Enew=np.array(Enew)
     
     slnew=np.array(slnew)
-    #print("fff")
         
     if type(w0)!=float or  w0 !=0:
         w=w0+np.log((Enew+.0000001)/Etot)
@@ -238,13 +283,13 @@ def get_xyzr_reco_reweighted_H4(arrays, event, w0=6, weight_by_granularity=True,
         w=Enew
     if weight_by_granularity:
         w=w/slnew**2
-    #print("ggg")
+
     sumw=np.sum(w+.0000001, axis=-1)
     x_reco=np.sum(xnew*w, axis=-1)/sumw
     y_reco=np.sum(ynew*w, axis=-1)/sumw
     z_reco=np.sum(znew*w, axis=-1)/sumw
     r_reco=np.hypot(x_reco,y_reco)
-    #print("hh")
+
     return [x_reco,y_reco,z_reco,r_reco]
 
 sqrt2=np.sqrt(2)
@@ -252,18 +297,28 @@ sqrt2=np.sqrt(2)
 def get_xyzr_reco_reweighted_S2(arrays, event, w0=6, weight_by_granularity=True, prefix="ZDC", MIP=0.000472):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
     y=arrays[f'{prefix}HitsReco.position.y'][event]
-    z=arrays[f'{prefix}HitsReco.position.z'][event]
+    z=arrays[f'{prefix}HitsReco.position.z'][event] - z/c_in_mm_per_ns #correct for time of flight
     E=arrays[f'{prefix}HitsReco.energy'][event]
     
-    #side length
+    #side length.  
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
-    #print("sidelength:",sl[0])
+    t=arrays[f'{prefix}HitsReco.time'][event]
+    slc=(E>Emin) & (t<tmax)
+    x=x[slc]
+    y=y[slc]
+    z=z[slc]
+    E=E[slc]
+    sl=sl[slc]
 
+    
     minz=min(z)
     dz=min(z[z!=minz])-minz
 
     Etot=sum(E)
-    thresh=Etot*np.exp(-np.max(w0))
+    if type(w0) !=float or  w0 != 0.0:
+        thresh=Etot*np.exp(-np.max(w0))
+    else :
+        thresh = 0
 
 
     xnew=[]
@@ -427,7 +482,8 @@ if __name__ == "__main__":
             mc_pzs.append(arrays[f'MCParticles.momentum.z'][event,2])
             if w0_use_range:
                 w0s.append(w0)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
         if event%10==0:

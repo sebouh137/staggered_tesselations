@@ -101,7 +101,7 @@
     <readout name="ZDCHits">
       <segmentation
 	type="HexGrid"
-	side_length="3.13*cm"
+	side_length="ZDCHexSideLength"
 	stagger="ZDCstagger"
 	/>
       <id>system:8,barrel:3,module:4,layer:8,slice:5,x:32:-16,y:-16</id>  
