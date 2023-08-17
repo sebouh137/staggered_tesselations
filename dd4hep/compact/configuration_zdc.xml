@@ -3,7 +3,7 @@
       Default insert configuration for angled beampipe
       Forward HCal and forward HCal insert will add a backlayer of only absorber
     </documentation>
-    <constant name="ZDC_zmin"                   value="3500*cm"/>
+    <constant name="ZDC_zmin"                   value="3750*cm"/>
     <constant name="ZDC_xposition"              value="0"/>
     <constant name="ZDC_width"                  value="59.6*cm"/>
     <constant name="ZDC_height"                 value="59.7485*cm"/>
