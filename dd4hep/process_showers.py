@@ -297,12 +297,12 @@ sqrt2=np.sqrt(2)
 def get_xyzr_reco_reweighted_S2(arrays, event, w0=6, weight_by_granularity=True, prefix="ZDC", MIP=0.000472):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
     y=arrays[f'{prefix}HitsReco.position.y'][event]
-    z=arrays[f'{prefix}HitsReco.position.z'][event] - z/c_in_mm_per_ns #correct for time of flight
+    z=arrays[f'{prefix}HitsReco.position.z'][event] 
     E=arrays[f'{prefix}HitsReco.energy'][event]
     
     #side length.  
     sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
-    t=arrays[f'{prefix}HitsReco.time'][event]
+    t=arrays[f'{prefix}HitsReco.time'][event] - z/c_in_mm_per_ns #correct for time of flight
     slc=(E>Emin) & (t<tmax)
     x=x[slc]
     y=y[slc]
