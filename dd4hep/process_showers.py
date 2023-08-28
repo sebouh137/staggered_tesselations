@@ -3,8 +3,8 @@ import uproot as ur, numpy as np, pandas as pd
 c_in_mm_per_ns = 299.792458
 
 #default values.  Can be configured
-Emin=0.000472*0.1 # 1/10 a MIP
-tmax=200 # 200 ns
+Emin=0.000472*0.1*0 # 1/10 a MIP
+tmax=200*1e15 # 200 ns
 
 def get_xyzr_reco_no_reweighting(arrays, event, w0=4, weight_by_granularity=True, prefix="ZDC", MIP=0.00047):
     x=arrays[f'{prefix}HitsReco.position.x'][event]
@@ -442,6 +442,7 @@ if __name__ == "__main__":
         w0=np.array([[a] for a in np.linspace(3.0, 8.0, 21)])
     x_truths=[]
     y_truths=[]
+    z_truths=[]
     drs=[]
     drs_rw=[]
     dxs=[]
@@ -461,19 +462,20 @@ if __name__ == "__main__":
 
             x_reco, y_reco, _, r_reco=get_xyzr_reco_no_reweighting(arrays, event, w0=w0_nrw, weight_by_granularity=True, prefix=prefix)
             if useH3reweighting:
-                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H3(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
+                x_reco_rw, y_reco_rw, z_reco_rw, r_reco_rw=get_xyzr_reco_reweighted_H3(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
             elif useH4reweighting:
-                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_H4(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
+                x_reco_rw, y_reco_rw, z_reco_rw, r_reco_rw=get_xyzr_reco_reweighted_H4(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
             elif useS2reweighting:
-                x_reco_rw, y_reco_rw, _, r_reco_rw=get_xyzr_reco_reweighted_S2(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
+                x_reco_rw, y_reco_rw, z_reco_rw, r_reco_rw=get_xyzr_reco_reweighted_S2(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
 
-            x_truth, y_truth, _, r_truth=get_xyzr_truth(arrays, event, w0=w0, weight_by_granularity=True, prefix=prefix)
+            x_truth, y_truth, z_truth, r_truth=get_xyzr_truth(arrays, event, w0=w0, weight_by_granularity=True, prefix=prefix)
             #print(r_truth, r_reco)
             drs.append(r_reco-r_truth)
             dxs.append(x_reco-x_truth)
             dys.append(y_reco-y_truth)
             x_truths.append(x_truth)
             y_truths.append(y_truth)
+            z_truths.append(z_truth)
             if useH3reweighting or useH4reweighting or useS2reweighting:
                 drs_rw.append(r_reco_rw-r_truth)
                 dxs_rw.append(x_reco_rw-x_truth)
@@ -489,14 +491,14 @@ if __name__ == "__main__":
         if event%10==0:
             print(f"{infile}: done with event {event}/{nevents}")
     if not w0_use_range:
-        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
+        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths, z_truth=z_truths)
         if useH3reweighting or useH4reweighting or useS2reweighting:
             d["dr_rw"]=drs_rw
             d["dx_rw"]=dxs_rw
             d["dy_rw"]=dys_rw
     else :
         w0s = [a[0] for a in w0] # flatten array
-        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths)
+        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths, z_truth=z_truths)
         if useH3reweighting or useH4reweighting or useS2reweighting:
             d["dr_rw"]=drs_rw
             d["dx_rw"]=dxs_rw
