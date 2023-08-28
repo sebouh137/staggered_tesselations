@@ -301,7 +301,7 @@ def get_xyzr_reco_reweighted_S2(arrays, event, w0=6, weight_by_granularity=True,
     E=arrays[f'{prefix}HitsReco.energy'][event]
     
     #side length.  
-    sl=arrays[f'{prefix}HitsReco.dimension.x'][event]/2
+    sl=arrays[f'{prefix}HitsReco.dimension.x'][event]
     t=arrays[f'{prefix}HitsReco.time'][event] - z/c_in_mm_per_ns #correct for time of flight
     slc=(E>Emin) & (t<tmax)
     x=x[slc]
