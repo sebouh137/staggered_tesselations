@@ -2,15 +2,15 @@
 
 run_sim () {
 # Input simulation parameters
-particle="neutron"
-beam_energy=$1
+particle=$1
+beam_energy=$2
 num_events=2000
 theta_min=0.0 # in degrees
 theta_max=0.5 # in degrees
 phi_min=0. # in degrees
 phi_max=360. # in degrees 
 physics_list="FTFP_BERT_HP"
-config=$2
+config=$3
 
 # Output file names
 info_string="${particle}_${beam_energy}GeV_theta_${theta}deg"
@@ -45,10 +45,16 @@ export JUGGLER_SIM_FILE=${simfile} JUGGLER_REC_FILE=${recofile} JUGGLER_N_EVENTS
 gaudirun.py zdc_reco.py
 }
 
-for E in 10 20 50 100 200 275; do
+# comment or uncomment the appropriate lines to run the set of simulations you want
+#for particle in neutron photon; do
+#for size in largecells smallcells; do
+for particle in neutron; do
+for E in 50 ; do
     for geom in zdc_s1_inf zdc_s2_inf zdc_staggered_h3_inf zdc_staggered_h4_inf zdc_unstaggered_inf; do
-	run_sim	$E $geom &
+    #for geom in zdc_staggered_h3_inf_${size} zdc_staggered_h4_inf_${size} zdc_unstaggered_inf_${size}; do	
+	run_sim	$particle $E $geom &
     done
 done
-
+done
+#done
 wait
