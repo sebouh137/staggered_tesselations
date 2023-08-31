@@ -440,9 +440,21 @@ if __name__ == "__main__":
     if w0_use_range:
         w0_nrw=np.array([[a] for a in np.linspace(3.0, 8.0, 21)])
         w0=np.array([[a] for a in np.linspace(3.0, 8.0, 21)])
+    r_truths=[]    
     x_truths=[]
     y_truths=[]
     z_truths=[]
+
+    r_recos=[]
+    x_recos=[]
+    y_recos=[]
+    z_recos=[]
+
+    r_recos_rw=[]
+    x_recos_rw=[]
+    y_recos_rw=[]
+    z_recos_rw=[]
+    
     drs=[]
     drs_rw=[]
     dxs=[]
@@ -460,7 +472,7 @@ if __name__ == "__main__":
         #print(len(arrays['ZDCHitsReco.position.x'][event]))
         try:
 
-            x_reco, y_reco, _, r_reco=get_xyzr_reco_no_reweighting(arrays, event, w0=w0_nrw, weight_by_granularity=True, prefix=prefix)
+            x_reco, y_reco, z_reco, r_reco=get_xyzr_reco_no_reweighting(arrays, event, w0=w0_nrw, weight_by_granularity=True, prefix=prefix)
             if useH3reweighting:
                 x_reco_rw, y_reco_rw, z_reco_rw, r_reco_rw=get_xyzr_reco_reweighted_H3(arrays, event, w0=w0, MIP=MIP, weight_by_granularity=True, prefix=prefix)
             elif useH4reweighting:
@@ -473,6 +485,11 @@ if __name__ == "__main__":
             drs.append(r_reco-r_truth)
             dxs.append(x_reco-x_truth)
             dys.append(y_reco-y_truth)
+            r_recos.append(r_reco)
+            x_recos.append(x_reco)
+            y_recos.append(y_reco)
+            z_recos.append(z_reco)
+            r_truths.append(r_truth)
             x_truths.append(x_truth)
             y_truths.append(y_truth)
             z_truths.append(z_truth)
@@ -480,6 +497,10 @@ if __name__ == "__main__":
                 drs_rw.append(r_reco_rw-r_truth)
                 dxs_rw.append(x_reco_rw-x_truth)
                 dys_rw.append(y_reco_rw-y_truth)
+                r_recos_rw.append(r_reco_rw)
+                x_recos_rw.append(x_reco_rw)
+                y_recos_rw.append(y_reco_rw)
+                z_recos_rw.append(z_reco_rw)
             Es.append(sum(arrays[f'{prefix}HitsReco.energy'][event]))
             mc_pzs.append(arrays[f'MCParticles.momentum.z'][event,2])
             if w0_use_range:
@@ -496,13 +517,21 @@ if __name__ == "__main__":
             d["dr_rw"]=drs_rw
             d["dx_rw"]=dxs_rw
             d["dy_rw"]=dys_rw
+            d['r_reco_rw']=r_recos_rw
+            d['x_reco_rw']=x_recos_rw
+            d['y_reco_rw']=y_recos_rw
+            d['z_reco_rw']=z_recos_rw
     else :
         w0s = [a[0] for a in w0] # flatten array
-        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths, z_truth=z_truths)
+        d=dict(E=Es, dr=drs, dy=dys, dx=dxs, mc_pz=mc_pzs, x_truth=x_truths, y_truth=y_truths, z_truth=z_truths, r_truth=r_truths, x_reco=x_recos, y_reco=y_recos, z_reco=z_recos, r_reco=r_recos)
         if useH3reweighting or useH4reweighting or useS2reweighting:
             d["dr_rw"]=drs_rw
             d["dx_rw"]=dxs_rw
             d["dy_rw"]=dys_rw
+            d['r_reco_rw']=r_recos_rw
+            d['x_reco_rw']=x_recos_rw
+            d['y_reco_rw']=y_recos_rw
+            d['z_reco_rw']=z_recos_rw
         for key in list(d.keys()):
             #print(key)
             #print(type(d[key]))
