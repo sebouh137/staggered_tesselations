@@ -109,7 +109,7 @@ ci_hcal_reco = CalHitReco("ci_hcal_reco",
 '''
 # ZDC
 ci_zdc_daq = dict(
-         dynamicRangeADC=200.*MeV,
+         dynamicRangeADC=800.*MeV,
          capacityADC=32768,
          pedestalMean=400,
          pedestalSigma=10)
