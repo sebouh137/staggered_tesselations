@@ -3,22 +3,24 @@ import numpy as np
 from shapely import *
 
 #not including the last absorber
-n_layers=64
+n_layers=60
 
 
-nsmall=7;nmed=9;nlarge=n_layers-nsmall-nmed
-sidelengths=[1.889]*nsmall+[3.589]*nmed+[4.486]*nlarge
+#nsmall=7;nmed=7;nlarge=n_layers-nsmall-nmed
+#sidelengths=[1.889]*nsmall+[3.589]*nmed+[4.486]*nlarge
 
-#= 19 small cells tall + thickness of a cell wall
-# or 10 medium cells tall + thickness of a cell wall
-# or 8 large cells tall + thickness of a cell wall.  
-det_height=62.24 
+#test
+nsmall=7;nlarge=0;nmed=n_layers-nlarge-nsmall; 
+sidelengths=[1.889]*nsmall+[3.112]*nmed
 
-#12 inches
-det_width=60.96
 
-#gap between left and right sides of absorbers (this space includes the additional space for backplanes
-det_gap=1.2
+
+#from the blueprints
+det_height=59.29 
+
+det_right_width=39.44
+
+det_left_width=19.44
 
 #first layer of the first absorber
 hcal_start_z=359.6
@@ -65,19 +67,19 @@ beampipe0=BeamPipe()
 
     
 #determine the layer boundaries as a polygon
-def layer_boundaries(layer=0, side="L", beampipe=beampipe0, height=det_height, width=det_width,gap_between_sides=0.4,
-                    gap_for_backplanes=0.4, backplanes_in_holes=False):
-    gap=gap_between_sides+2*gap_for_backplanes
-    offsetX=-10
-    holeX=beampipe.holeX(layer)
-    holeR=beampipe.holeR(layer)
+def layer_boundaries(layer=0, side="L", beampipe=beampipe0, backplanes_in_holes=False):
+    
+    gap=0.38#gap between left and right absorbers
+    
+    holeR=13.7+(17.04-13.7)*(layer-1)/64
     if side=="R":
-        offsetX-width/2
+        #relative to the inner edge of the absorber
+        holeX=7.07+(10.33-7.07)*(layer-1)/64
         
         phi= np.linspace(-np.pi/2, np.pi/2, 25)
         
-        x,y = [offsetX-width/2, offsetX-width/2, -gap/2, -gap/2] + list(holeX-holeR*np.cos(phi)) + [-gap/2,-gap/2, -39.8], \
-                 [-height/2,height/2, height/2, holeR]+ list(-holeR*np.sin(phi))+ [-holeR,-height/2, -height/2]
+        x = np.concatenate([[-det_right_width, -det_right_width, 0, 0, -0.5, -0.5,0, 0],-holeX-holeR*np.cos(phi),[0,0,-0.5,-0.5,0,0, -det_right_width]])-gap/2
+        y= np.concatenate([[-det_height/2,det_height/2, det_height/2,28.14, 28.14,18.14,18.14, holeR],-holeR*np.sin(phi),[-holeR,-18.14, -18.14,-28.14, -28.14,-det_height/2, -det_height/2]])
         poly = Polygon(zip(x,y))
         if backplanes_in_holes:
             #remove some space for the backplanes in the sides of the detector:
@@ -88,13 +90,15 @@ def layer_boundaries(layer=0, side="L", beampipe=beampipe0, height=det_height, w
         else :
             return poly
     if side=="L":
+        #relative to the inner edge of the absorber
+        holeX=7.44+(10.71-7.44)*(layer-1)/64
         
-        phi0 = np.arccos((holeX-gap/2)/holeR)
+        phi0 = np.arccos(-holeX/holeR)
         #print((np.pi-phi0)/np.pi*2)
         phi = np.linspace(phi0,2*np.pi-phi0, 13)
         
-        x=[offsetX+width/2, offsetX+width/2, gap/2] + list(holeX-np.cos(phi)*holeR) + [gap/2, 19.8]
-        y=[-height/2,height/2, height/2]+list(holeR*np.sin(phi)) + [-height/2, -height/2]
+        x=np.concatenate([[det_left_width, det_left_width, 0, 0, 0.5, 0.5, 0], -holeX-np.cos(phi)*holeR, [0, 0.5, 0.5, 0,0, det_left_width]])+gap/2
+        y=np.concatenate([[-det_height/2,det_height/2, det_height/2,28.14, 28.14,18.14, 18.14],holeR*np.sin(phi),[-18.14, -18.14,-28.14, -28.14,-det_height/2, -det_height/2]])
         return Polygon(zip(x,y))
     
 #thickness of the cell walls in the 3d-printed frame
@@ -102,5 +106,5 @@ wall_thickness = 0.08
 #gap between the cell cell of the 3d printed frame and the scintillator tile.  
 wall_scint_gap=0.01
 
-nW=34
+nW=0
 absorber_material=['W']*nW+['Fe']*(n_layers-nW+1)
