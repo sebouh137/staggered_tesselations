@@ -67,31 +67,29 @@ beampipe0=BeamPipe()
 
     
 #determine the layer boundaries as a polygon
-def layer_boundaries(layer=0, side="L", beampipe=beampipe0, backplanes_in_holes=False):
+#     inner_tolerance: if this is set to a non-zero value
+#          returns the shape of the board, except with a smaller radius of the 
+#          hole.  This is useful when determining the layout of the Insert's cells
+#          and allowing them to slightly hang over the edge of the PCB boards
+#     
+def layer_boundaries(layer=0, side="L", inner_tolerance=0):
     
     gap=0.38#gap between left and right absorbers
-    
-    holeR=13.7+(17.04-13.7)*(layer-1)/64
+    layer_shift=5 # values have been shifted by 5 layers
+    holeR=13.7+(17.04-13.7)*(layer-1+layer_shift)/64-inner_tolerance
     if side=="R":
         #relative to the inner edge of the absorber
-        holeX=7.07+(10.33-7.07)*(layer-1)/64
+        holeX=7.07+(10.33-7.07)*(layer-1+layer_shift)/64
         
         phi= np.linspace(-np.pi/2, np.pi/2, 25)
         
         x = np.concatenate([[-det_right_width, -det_right_width, 0, 0, -0.5, -0.5,0, 0],-holeX-holeR*np.cos(phi),[0,0,-0.5,-0.5,0,0, -det_right_width]])-gap/2
         y= np.concatenate([[-det_height/2,det_height/2, det_height/2,28.14, 28.14,18.14,18.14, holeR],-holeR*np.sin(phi),[-holeR,-18.14, -18.14,-28.14, -28.14,-det_height/2, -det_height/2]])
         poly = Polygon(zip(x,y))
-        if backplanes_in_holes:
-            #remove some space for the backplanes in the sides of the detector:
-            x=[0, holeX, holeX, 0, 0]
-            y=holeR+gap_for_backplanes
-            y=[y,y, -y, -y, y]
-            return poly.difference(Polygon(zip(x,y)))
-        else :
-            return poly
+        return poly
     if side=="L":
         #relative to the inner edge of the absorber
-        holeX=7.44+(10.71-7.44)*(layer-1)/64
+        holeX=7.44+(10.71-7.44)*(layer-1+layer_shift)/64
         
         phi0 = np.arccos(-holeX/holeR)
         #print((np.pi-phi0)/np.pi*2)
